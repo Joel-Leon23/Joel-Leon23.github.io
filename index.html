@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Problema de la Mochila</title>
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
   <div class="container">
     <h1>Problema de la Mochila</h1>
@@ -37,48 +39,53 @@
     </table>
   </div>
   <script>
-    let selectedItems = [];
-    function max(a, b, n) {
-      return (a > b) ? {value: a , item: n} : b;
-    }
-      function knapSack(W, wt, val, n) {
-        let K = [];
-        let keep = [];
-        for(let i = 0; i <= n; i++) {
-            K[i] = [];
-            keep[i] = [];
-            for(let w = 0; w <= W; w++) {
-                if (i == 0 || w == 0) {
-                    K[i][w] = 0;
-                }
-                else if(wt[i - 1] <= w) {
-                    if(val[i - 1] + K[i - 1][w - wt[i - 1]] > K[i - 1][w]) {
-                        K[i][w] = val[i - 1] + K[i - 1][w - wt[i - 1]];
-                        keep[i][w] = 1; // Elemento añadido
-                    } else {
-                        K[i][w] = K[i - 1][w];
-                        keep[i][w] = 0; // Elemento no añadido
-                    }
-                } else {
-                    K[i][w] = K[i - 1][w];
-                    keep[i][w] = 0; // Elemento no añadido
-                }
+    // La función `knapsack` recibe el peso máximo de la mochila, una lista de pesos, 
+    // una lista de valores y la cantidad de elementos que se pueden agregar a la mochila.
+    function knapsack(maxWeight, weightList, valueList, numItems) {
+      let maxValueMatrix = []; // matriz para almacenar los valores máximos posibles en cada paso
+      let includedItemsMatrix = []; // matriz para almacenar si un elemento fue incluido o no en cada paso
+
+      // Inicializar las matrices
+      for (let i = 0; i <= numItems; i++) {
+        maxValueMatrix[i] = [];
+        includedItemsMatrix[i] = [];
+        for (let w = 0; w <= maxWeight; w++) {
+          if (i === 0 || w === 0) {
+            maxValueMatrix[i][w] = 0; // Si no hay elementos o el peso es 0, el valor máximo es 0
+          }
+          else if (weightList[i - 1] <= w) {
+            // Si el elemento cabe en la mochila, decidir si incluirlo o no
+            if (valueList[i - 1] + maxValueMatrix[i - 1][w - weightList[i - 1]] > maxValueMatrix[i - 1][w]) {
+              // Si el valor del elemento actual + el valor máximo obtenido con el peso restante 
+              // es mayor que el valor máximo sin incluir el elemento actual, entonces incluir el elemento.
+              maxValueMatrix[i][w] = valueList[i - 1] + maxValueMatrix[i - 1][w - weightList[i - 1]];
+              includedItemsMatrix[i][w] = 1; // Elemento añadido
+            } else {
+              // Si no, conservar el valor máximo sin incluir el elemento actual.
+              maxValueMatrix[i][w] = maxValueMatrix[i - 1][w];
+              includedItemsMatrix[i][w] = 0; // Elemento no añadido
             }
+          } else {
+            // Si el elemento no cabe en la mochila, conservar el valor máximo sin incluir el elemento actual.
+            maxValueMatrix[i][w] = maxValueMatrix[i - 1][w];
+            includedItemsMatrix[i][w] = 0; // Elemento no añadido
+          }
         }
-    
-        // Recuperamos los elementos añadidos
-        let result = [];
-        let w = W;
-        for(let i = n; i > 0; i--) {
-            if(keep[i][w] == 1) {
-                result.push(i - 1); // Añadimos el índice del elemento añadido
-                w = w - wt[i - 1];
-            }
+      }
+      // Recuperar los elementos añadidos a la mochila
+      let resultItems = [];
+      let remainingWeight = maxWeight;
+      for (let i = numItems; i > 0; i--) {
+        if (includedItemsMatrix[i][remainingWeight] == 1) {
+          resultItems.push(i - 1); // Añadir el índice del elemento añadido
+          remainingWeight = remainingWeight - weightList[i - 1];
         }
-    
-        return { maxValue: K[n][W], items: result };
+      }
+
+      // Devolver el valor máximo y los índices de los elementos añadidos a la mochila
+      return { max_value: maxValueMatrix[numItems][maxWeight], items: resultItems.sort() };
     }
-  
+
     document.getElementById('addItem').addEventListener('click', () => {
       const itemContainer = document.getElementById('itemContainer');
       const newItem = document.createElement('div');
@@ -95,19 +102,40 @@
       `;
       itemContainer.appendChild(newItem);
     });
-    
+
     document.getElementById('knapSackForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      selectedItems = [];
+
+      // Limpiar la tabla antes de añadir nuevos elementos.
+      document.getElementById('selectedItems').getElementsByTagName('tbody')[0].innerHTML = "";
+
       const capacity = Number(document.getElementById('capacity').value);
       const values = Array.from(document.getElementsByClassName('value')).map(x => Number(x.value));
       const weights = Array.from(document.getElementsByClassName('weight')).map(x => Number(x.value));
-      const totalValue = knapSack(capacity, weights, values, values.length);
-      console.log(selectedItems)
-      console.log({totalValue})
-      document.getElementById('totalValue').innerText = 'Valor total: ' + totalValue.maxValue;
+      const result = knapsack(capacity, weights, values, values.length);
+
+      document.getElementById('totalValue').innerText = 'Valor total: ' + result.max_value;
+
+      // Añadir los ítems seleccionados a la tabla
+      let totalWeight = 0;
+      for (let i of result.items) {
+        const row = document.createElement('tr');
+        const indexCell = document.createElement('td');
+        const valueCell = document.createElement('td');
+        const weightCell = document.createElement('td');
+        indexCell.textContent = i + 1;
+        valueCell.textContent = values[i];
+        weightCell.textContent = weights[i];
+        totalWeight += weights[i];
+        row.appendChild(indexCell);
+        row.appendChild(valueCell);
+        row.appendChild(weightCell);
+        document.getElementById('selectedItems').getElementsByTagName('tbody')[0].appendChild(row);
+      }
+      document.getElementById('totalWeight').innerText = 'Peso total: ' + totalWeight;
     });
-    
+
   </script>
 </body>
+
 </html>
