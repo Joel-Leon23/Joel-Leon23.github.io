@@ -41,44 +41,20 @@
     function max(a, b, n) {
       return (a > b) ? {value: a , item: n} : b;
     }
-      function knapSack(W, wt, val, n) {
-        let K = [];
-        let keep = [];
-        for(let i = 0; i <= n; i++) {
-            K[i] = [];
-            keep[i] = [];
-            for(let w = 0; w <= W; w++) {
-                if (i == 0 || w == 0) {
-                    K[i][w] = 0;
-                }
-                else if(wt[i - 1] <= w) {
-                    if(val[i - 1] + K[i - 1][w - wt[i - 1]] > K[i - 1][w]) {
-                        K[i][w] = val[i - 1] + K[i - 1][w - wt[i - 1]];
-                        keep[i][w] = 1; // Elemento añadido
-                    } else {
-                        K[i][w] = K[i - 1][w];
-                        keep[i][w] = 0; // Elemento no añadido
-                    }
-                } else {
-                    K[i][w] = K[i - 1][w];
-                    keep[i][w] = 0; // Elemento no añadido
-                }
-            }
-        }
-    
-        // Recuperamos los elementos añadidos
-        let result = [];
-        let w = W;
-        for(let i = n; i > 0; i--) {
-            if(keep[i][w] == 1) {
-                result.push(i - 1); // Añadimos el índice del elemento añadido
-                w = w - wt[i - 1];
-            }
-        }
-    
-        return { maxValue: K[n][W], items: result };
+    function knapSack(W, wt, val, n) {
+      if (n <= 0 || W <= 0) {
+        return 0;
+      }
+      if (wt[n - 1] > W) {
+        return knapSack(W, wt, val, n - 1);
+      }   
+      const result = max(val[n - 1] + knapSack(W - wt[n - 1], wt, val, n - 1), knapSack(W, wt, val, n - 1), n - 1);
+      if (result instanceof Object) {
+        selectedItems.push(result.item);
+        return result.value;
+      }
+      return result;
     }
-  
     document.getElementById('addItem').addEventListener('click', () => {
       const itemContainer = document.getElementById('itemContainer');
       const newItem = document.createElement('div');
@@ -104,8 +80,8 @@
       const weights = Array.from(document.getElementsByClassName('weight')).map(x => Number(x.value));
       const totalValue = knapSack(capacity, weights, values, values.length);
       console.log(selectedItems)
-      console.log({totalValue})
-      document.getElementById('totalValue').innerText = 'Valor total: ' + totalValue.maxValue;
+      console.log(totalValue)
+      document.getElementById('totalValue').innerText = 'Valor total: ' + totalValue;
     });
     
   </script>
