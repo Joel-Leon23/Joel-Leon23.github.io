@@ -62,23 +62,24 @@
     function getKnapSack(capacity, n, items, lookup, selectedItems) {
       if (capacity < 0) return Number.MIN_SAFE_INTEGER;
       if (capacity === 0 || n < 0) return 0;
-
+    
       const key = `${n}|${capacity}`;
-        
+    
       if (!lookup.has(key)) {
         const include = items[n].value + getKnapSack(capacity - items[n].weight, n - 1, items, lookup, selectedItems);
         const exclude = getKnapSack(capacity, n - 1, items, lookup, selectedItems);
-
+    
         if (include > exclude) {
           selectedItems[n] = true;
           lookup.set(key, include);
         } else {
+          selectedItems[n] = false;
           lookup.set(key, exclude);
         }
       }
-        
       return lookup.get(key);
     }
+    
 
     document.getElementById('addItem').addEventListener('click', () => {
       const itemContainer = document.getElementById('itemContainer');
@@ -100,18 +101,18 @@
     document.getElementById('knapSackForm').addEventListener('submit', (e) => {
       e.preventDefault();
       lookup.clear();
-
+    
       const capacity = document.getElementById('capacity').value;
       const values = Array.from(document.getElementsByClassName('value')).map(x => Number(x.value));
       const weights = Array.from(document.getElementsByClassName('weight')).map(x => Number(x.value));
       const items = values.map((v, i) => ({ value: v, weight: weights[i] }));
-
+    
       selectedItems.length = 0;
       selectedItems.length = items.length;
-
+    
       const totalValue = getKnapSack(capacity, items.length - 1, items, lookup, selectedItems);
       document.getElementById('totalValue').innerText = 'Valor total: ' + totalValue;
-
+    
       let totalWeight = 0;
       const tableBody = document.getElementById('selectedItems').getElementsByTagName('tbody')[0];
       tableBody.innerHTML = '';
@@ -124,9 +125,9 @@
           newRow.insertCell(2).innerText = item.weight;
         }
       });
-
+    
       document.getElementById('totalWeight').innerText = 'Peso total: ' + totalWeight;
-    });
+    });    
   </script>
 </body>
 </html>
