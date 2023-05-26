@@ -1,122 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Estadísticas de pesos</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #000; }
-    </style>
+  <title>Problema de la Mochila</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1 class="my-4">Estadísticas de pesos</h1>
-        
-        <button onclick="calcular()" class="btn btn-primary mb-4">Calcular</button>
-        <div class="row">
-            <div class="col-md-6">
-                <h2>Datos de mujeres</h2>
-                <div id="resultadoMujeres"></div>
-            </div>
-            <div class="col-md-6">
-                <h2>Datos de hombres</h2>
-                <div id="resultadoHombres"></div>
-            </div>
-        </div>
-    </div>
-    <script>
-    const datosMujeres = [43.2,46.4,49.1,49.1,50,50,50.9,52.3,52.3,52.7,52.7,53.6,53.6,54.5,54.5,54.5,55,55.5,56.8,56.8,56.8,56.8,56.8,59.1,59.1,59.1,59.5,60.5,61.4,62.7,63.6,65.9,68.2,68.2,68.2];
-    const datosHombres = [55.9,59.1,59.1,61.4,61.4,61.8,62.7,63.6,63.6,63.6,64.5,65.9,65.9,65.9,65.9,68.2,68.2,68.2,68.2,68.2,68.2,68.2,69.5,70.5,70.5,70.5,70.5,70.5,70.5,70.5,70.5,70.5,70.5,71.4,72.7,72.7,72.7,72.7,72.7,74.5,75,77.3,77.3,77.3,77.3,79.5,79.5,81.8,81.8,81.8,84.1,86.4,86.4,86.4,86.4,88.6,97.7];
+  <div class="container">
+    <h2 class="mt-3">Problema de la Mochila</h2>
 
-    function calcular() {
-        calcularEstadisticas(datosMujeres, 'resultadoMujeres');
-        calcularEstadisticas(datosHombres, 'resultadoHombres');
+    <form id="knapSackForm" class="mt-3">
+      <div class="form-group">
+        <label for="capacity">Capacidad</label>
+        <input type="number" class="form-control" id="capacity" name="capacity">
+      </div>
+      
+      <div id="itemContainer">
+        <div class="form-row item">
+          <div class="form-group col-md-6">
+            <label for="value">Valor</label>
+            <input type="number" class="form-control value">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="weight">Peso</label>
+            <input type="number" class="form-control weight">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="col-sm-6">
+          <button type="button" id="addItem" class="btn btn-primary btn-block">Añadir Item</button>
+        </div>
+        <div class="col-sm-6">
+          <button type="submit" class="btn btn-success btn-block">Calcular</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="result" class="mt-5">
+      <h4>Resultados:</h4>
+      <p id="totalWeight"></p>
+      <p id="totalValue"></p>
+      <table id="selectedItems" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Valor</th>
+            <th>Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const lookup = new Map();
+    const selectedItems = [];
+
+    function getKnapSack(capacity, n, items, lookup, selectedItems) {
+      if (capacity < 0) return Number.MIN_SAFE_INTEGER;
+      if (capacity === 0 || n < 0) return 0;
+
+      const key = `${n}|${capacity}`;
+        
+      if (!lookup.has(key)) {
+        const include = items[n].value + getKnapSack(capacity - items[n].weight, n - 1, items, lookup, selectedItems);
+        const exclude = getKnapSack(capacity, n - 1, items, lookup, selectedItems);
+
+        if (include > exclude) {
+          selectedItems[n] = true;
+          lookup.set(key, include);
+        } else {
+          lookup.set(key, exclude);
+        }
+      }
+        
+      return lookup.get(key);
     }
 
-    function calcularEstadisticas(datos, idElemento) {
-        datos = datos.sort((a, b) => a - b);
-        
-        const rango = datos[datos.length - 1] - datos[0];
-        const numClases = Math.ceil(1 + 3.322 * Math.log10(datos.length)); 
-        const amplitud = rango / numClases;
+    document.getElementById('addItem').addEventListener('click', () => {
+      const itemContainer = document.getElementById('itemContainer');
+      const newItem = document.createElement('div');
+      newItem.className = 'form-row item';
+      newItem.innerHTML = `
+        <div class="form-group col-md-6">
+          <label for="value">Valor</label>
+          <input type="number" class="form-control value">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="weight">Peso</label>
+          <input type="number" class="form-control weight">
+        </div>
+      `;
+      itemContainer.appendChild(newItem);
+    });
 
-        let clases = [];
-        let limiteInferior = datos[0];
+    document.getElementById('knapSackForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      lookup.clear();
 
-        for(let i = 0; i < numClases; i++) {
-            const limiteSuperior = limiteInferior + amplitud;
-            const x = (limiteInferior + limiteSuperior) / 2;
-            const frecuencia = datos.filter(d => d >= limiteInferior && d < limiteSuperior).length;
-            clases.push({ limiteInferior: Number(limiteInferior.toFixed(2)), limiteSuperior: Number(limiteSuperior.toFixed(2)), x, frecuencia });
-            limiteInferior = limiteSuperior;
+      const capacity = document.getElementById('capacity').value;
+      const values = Array.from(document.getElementsByClassName('value')).map(x => Number(x.value));
+      const weights = Array.from(document.getElementsByClassName('weight')).map(x => Number(x.value));
+      const items = values.map((v, i) => ({ value: v, weight: weights[i] }));
+
+      selectedItems.length = 0;
+      selectedItems.length = items.length;
+
+      const totalValue = getKnapSack(capacity, items.length - 1, items, lookup, selectedItems);
+      document.getElementById('totalValue').innerText = 'Valor total: ' + totalValue;
+
+      let totalWeight = 0;
+      const tableBody = document.getElementById('selectedItems').getElementsByTagName('tbody')[0];
+      tableBody.innerHTML = '';
+      items.forEach((item, index) => {
+        if (selectedItems[index]) {
+          totalWeight += item.weight;
+          const newRow = tableBody.insertRow();
+          newRow.insertCell(0).innerText = index + 1;
+          newRow.insertCell(1).innerText = item.value;
+          newRow.insertCell(2).innerText = item.weight;
         }
+      });
 
-        const suma = datos.reduce((a, b) => a + b, 0);
-        const media = suma / datos.length;
-        
-        const moda = datos.sort((a,b) =>
-              datos.filter(v => v===a).length
-            - datos.filter(v => v===b).length
-        ).pop();
-        
-        const mediana = datos.length % 2 ?
-            datos[Math.floor(datos.length / 2)] :
-            (datos[datos.length / 2 - 1] + datos[datos.length / 2]) / 2;
-
-        const varianza = datos.reduce((a, b) => a + Math.pow(b - media, 2), 0) / (datos.length - 1);
-
-        clases = clases.map(c => ({ ...c, varianza: Math.pow(c.x - media, 2) * c.frecuencia }));
-
-        document.getElementById(idElemento).innerHTML = `
-            <h3 class="my-3">Tabla de datos agrupados</h3>
-            <table class="table table-bordered">
-                <tr>
-                    <th>Clase</th>
-                    <th>X</th>
-                    <th>Frecuencia</th>
-                    <th>Varianza de la clase</th>
-                </tr>
-                ${clases.map(c => `<tr>
-                    <td>[${c.limiteInferior.toFixed(2)}, ${c.limiteSuperior.toFixed(2)})</td>
-                    <td>${c.x.toFixed(2)}</td>
-                    <td>${c.frecuencia}</td>
-                    <td>${c.varianza.toFixed(2)}</td>
-                </tr>`).join('')}
-            </table>
-            <table class="table table-bordered">
-                <tr><th>Media</th><td>${media.toFixed(2)}</td></tr>
-                <tr><th>Moda</th><td>${moda.toFixed(2)}</td></tr>
-                <tr><th>Mediana</th><td>${mediana.toFixed(2)}</td></tr>
-                <tr><th>Varianza</th><td>${varianza.toFixed(2)}</td></tr>
-            </table>
-            `;
-        
-            let graficaPuntos = clases.map(c => {
-                let frecuencia = datos.filter(d => d >= c.limiteInferior && d < c.limiteSuperior).length;
-                return `${c.limiteInferior.toFixed(2)} - ${c.limiteSuperior.toFixed(2)}: ${'*'.repeat(frecuencia)}`;
-            });
-        
-            // Diagrama de tallo y hojas
-            let tallos = Array.from(new Set(datos.map(d => Math.floor(d))));
-            let diagramaTalloYHojas = tallos.map(tallo => {
-                let hojas = datos.filter(d => Math.floor(d) === tallo).map(d => Math.round((d - Math.floor(d))*10));
-                return `${tallo}: ${hojas.join(' ')}`;
-            });
-        
-            // ...código previo para la presentación de resultados...
-        
-            // Agregando gráfica de puntos y diagrama de tallo y hojas a los resultados
-            document.getElementById(idElemento).innerHTML += `
-                <h2>Gráfica de puntos</h2>
-                <ul>
-                    ${graficaPuntos.map(punto => `<li>${punto}</li>`).join('')}
-                </ul>
-                <h2>Diagrama de tallo y hojas</h2>
-                <ul>
-                    ${diagramaTalloYHojas.map(talloYHojas => `<li>${talloYHojas}</li>`).join('')}
-                </ul>
-            `;
-          }
-          </script>
-      </body>
-      </html>
+      document.getElementById('totalWeight').innerText = 'Peso total: ' + totalWeight;
+    });
+  </script>
+</body>
+</html>
