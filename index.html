@@ -1,86 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Problema de la Mochila</title>
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <h2 class="mt-3">Problema de la Mochila</h2>
-
-    <form id="knapSackForm" class="mt-3">
-      <div class="form-group">
-        <label for="capacity">Capacidad</label>
-        <input type="number" class="form-control" id="capacity" name="capacity">
-      </div>
-      
-      <div id="itemContainer">
-        <div class="form-row item">
-          <div class="form-group col-md-6">
-            <label for="value">Valor</label>
-            <input type="number" class="form-control value">
-          </div>
-          <div class="form-group col-md-6">
-            <label for="weight">Peso</label>
-            <input type="number" class="form-control weight">
-          </div>
-        </div>
-      </div>
-
+    <h1>Problema de la Mochila</h1>
+    <form id="knapSackForm">
       <div class="form-row">
-        <div class="col-sm-6">
-          <button type="button" id="addItem" class="btn btn-primary btn-block">Añadir Item</button>
+        <div class="form-group col-md-6">
+          <label for="capacity">Capacidad</label>
+          <input type="number" id="capacity" class="form-control">
         </div>
-        <div class="col-sm-6">
-          <button type="submit" class="btn btn-success btn-block">Calcular</button>
+        <div class="form-group col-md-6">
+          <button type="button" id="addItem" class="btn btn-primary btn-block mt-4">Añadir Item</button>
         </div>
       </div>
+      <div id="itemContainer"></div>
+      <button type="submit" class="btn btn-success btn-block mt-4">Calcular</button>
     </form>
-
-    <div id="result" class="mt-5">
-      <h4>Resultados:</h4>
-      <p id="totalWeight"></p>
-      <p id="totalValue"></p>
-      <table id="selectedItems" class="table table-striped">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Valor</th>
-            <th>Peso</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </div>
+    <h2 id="totalValue"></h2>
+    <h2 id="totalWeight"></h2>
+    <table id="selectedItems" class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Valor</th>
+          <th scope="col">Peso</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
   </div>
-
   <script>
-    const lookup = new Map();
-    const selectedItems = [];
-
-    function getKnapSack(capacity, n, items, lookup, selectedItems) {
-      if (capacity < 0) return Number.MIN_SAFE_INTEGER;
-      if (capacity === 0 || n < 0) return 0;
-    
-      const key = `${n}|${capacity}`;
-    
-      if (!lookup.has(key)) {
-        const include = items[n].value + getKnapSack(capacity - items[n].weight, n - 1, items, lookup, selectedItems);
-        const exclude = getKnapSack(capacity, n - 1, items, lookup, selectedItems);
-    
-        if (include > exclude) {
-          selectedItems[n] = true;
-          lookup.set(key, include);
-        } else {
-          selectedItems[n] = false;
-          lookup.set(key, exclude);
+    function max(a, b) {
+         return (a > b) ? a : b;
+    }
+    function knapSack(W, wt, val, n) {
+        if (n == 0 || W == 0) {
+          return 0;
         }
-      }
-      return lookup.get(key);
+        if (wt[n - 1] > W) {
+          return knapSack(W, wt, val, n - 1);
+        }
+        // 
+        return max(val[n - 1] + knapSack(W - wt[n - 1], wt, val, n - 1), knapSack(W, wt, val, n - 1));
     }
     
-
     document.getElementById('addItem').addEventListener('click', () => {
       const itemContainer = document.getElementById('itemContainer');
       const newItem = document.createElement('div');
@@ -97,37 +67,18 @@
       `;
       itemContainer.appendChild(newItem);
     });
-
+    
     document.getElementById('knapSackForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      lookup.clear();
     
       const capacity = document.getElementById('capacity').value;
       const values = Array.from(document.getElementsByClassName('value')).map(x => Number(x.value));
       const weights = Array.from(document.getElementsByClassName('weight')).map(x => Number(x.value));
-      const items = values.map((v, i) => ({ value: v, weight: weights[i] }));
-    
-      selectedItems.length = 0;
-      selectedItems.length = items.length;
-    
-      const totalValue = getKnapSack(capacity, items.length - 1, items, lookup, selectedItems);
+      const totalValue = knapSack(capacity, weights, values, values.length);
+      console.log(totalValue)
       document.getElementById('totalValue').innerText = 'Valor total: ' + totalValue;
+    });
     
-      let totalWeight = 0;
-      const tableBody = document.getElementById('selectedItems').getElementsByTagName('tbody')[0];
-      tableBody.innerHTML = '';
-      items.forEach((item, index) => {
-        if (selectedItems[index]) {
-          totalWeight += item.weight;
-          const newRow = tableBody.insertRow();
-          newRow.insertCell(0).innerText = index + 1;
-          newRow.insertCell(1).innerText = item.value;
-          newRow.insertCell(2).innerText = item.weight;
-        }
-      });
-    
-      document.getElementById('totalWeight').innerText = 'Peso total: ' + totalWeight;
-    });    
   </script>
 </body>
 </html>
