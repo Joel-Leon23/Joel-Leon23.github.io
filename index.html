@@ -82,7 +82,7 @@
       }
 
       // Devolver el valor máximo y los índices de los elementos añadidos a la mochila
-      return { max_value: maxValueMatrix[numItems][maxWeight], items: resultItems.sort() };
+      return { maxValue: maxValueMatrix[numItems][maxWeight], items: resultItems.sort() };
     }
 
     document.getElementById('addItem').addEventListener('click', () => {
@@ -113,7 +113,7 @@
       const weights = Array.from(document.getElementsByClassName('weight')).map(x => Number(x.value));
       const result = knapsack(capacity, weights, values, values.length);
 
-      document.getElementById('totalValue').innerText = 'Valor total: ' + result.max_value;
+      document.getElementById('totalValue').innerText = 'Valor total: ' + result.maxValue;
 
       // Añadir los ítems seleccionados a la tabla
       let totalWeight = 0;
